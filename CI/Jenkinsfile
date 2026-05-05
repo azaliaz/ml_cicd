@@ -1,0 +1,55 @@
+pipeline {
+  agent any
+
+  environment {
+    DOCKER_IMAGE_BASENAME = "${env.DOCKER_IMAGE_BASENAME ?: 'azaliaz/ml_cicd'}"
+    IMAGE_TAG = "${env.BUILD_NUMBER}"
+    FULL_IMAGE = "${DOCKER_IMAGE_BASENAME}:${IMAGE_TAG}"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Build image') {
+      steps {
+        script {
+          def ctx = fileExists('Dockerfile') ? '.' : 'ml-course-assignment'
+          env.DOCKER_BUILD_CTX = ctx
+        }
+        dir("${env.DOCKER_BUILD_CTX}") {
+          sh 'docker build -t ${FULL_IMAGE} -t ${DOCKER_IMAGE_BASENAME}:ci-${BUILD_NUMBER} .'
+        }
+      }
+    }
+
+    stage('Pytest inside container (CI)') {
+      steps {
+        sh 'docker run --rm -e SHOW_LOG=false --entrypoint python -w /app "${FULL_IMAGE}" -m pytest -q'
+      }
+    }
+
+    stage('Push to Docker Hub') {
+      when {
+        allOf {
+          expression { return env.CHANGE_ID != null }
+          expression { return (env.CHANGE_TARGET ?: '') == 'main' }
+        }
+      }
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+          sh '''
+            echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+            docker tag "${FULL_IMAGE}" "${DOCKER_IMAGE_BASENAME}:latest"
+            docker push "${FULL_IMAGE}"
+            docker push "${DOCKER_IMAGE_BASENAME}:ci-${BUILD_NUMBER}"
+            docker push "${DOCKER_IMAGE_BASENAME}:latest"
+          '''
+        }
+      }
+    }
+  }
+}

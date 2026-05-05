@@ -1,0 +1,4 @@
+# Параметры сплита для DVC / preprocess (гиперпараметры модели — в config.ini)
+preprocess:
+  test_size: 0.2
+  random_state: 42

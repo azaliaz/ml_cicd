@@ -63,7 +63,9 @@ pipeline {
       steps {
         sh '''
           for i in $(seq 1 60); do
-            curl -fsS "http://127.0.0.1:${HOST_PORT}/health" && exit 0
+            if docker exec housing-api-cd curl -fsS "http://127.0.0.1:8000/health"; then
+              exit 0
+            fi
             sleep 2
           done
           echo "Healthcheck timeout"; exit 1

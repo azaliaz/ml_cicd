@@ -78,12 +78,15 @@ pipeline {
         expression { return params.RUN_SCENARIOS }
       }
       steps {
-        dir("${env.DOCKER_BUILD_CTX}") {
-          sh '''
-            python3 -m pip install --user -q httpx pyyaml
-            python3 scripts/run_scenarios.py --base-url "${SCENARIO_BASE_URL}"
-          '''
-        }
+        sh '''
+          docker run --rm \
+            --network host \
+            -e SCENARIO_BASE_URL="${SCENARIO_BASE_URL}" \
+            --entrypoint python \
+            -w /app \
+            "${DOCKER_IMAGE}" \
+            scripts/run_scenarios.py --base-url "${SCENARIO_BASE_URL}"
+        '''
       }
     }
   }

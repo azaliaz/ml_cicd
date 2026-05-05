@@ -5,8 +5,8 @@ stages:
     deps:
     - path: params.yaml
       hash: md5
-      md5: 63a8fc50116a35f03e1ce01c07ada64c
-      size: 168
+      md5: 213d5d486bbcb5d22b1afac66df7a7c2
+      size: 48
     - path: src/paths.py
       hash: md5
       md5: 68848e83c02ab7fcf990347090085ed8
@@ -35,8 +35,8 @@ stages:
     deps:
     - path: config.ini
       hash: md5
-      md5: 41ed746d25fe5a008a34aee0950c7032
-      size: 208
+      md5: 5b57bc088091e637e22ea53658544b0e
+      size: 72
     - path: data/processed
       hash: md5
       md5: bd8c6e04a6ed11c06d705649532cf39a.dir

@@ -1,9 +1,45 @@
-.idea
-.venv
-.DS_STORE
+.DS_Store
+
+# IDE
 .idea/
+.vscode/
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-data
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Build / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Test / coverage / cache
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Logs
+*.log
+logfile.log
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local runtime artifacts
+models/
+data/
+
+# Keep DVC metadata in git, ignore only local cache files
+.dvc/tmp/

@@ -90,17 +90,12 @@ dvc dag
 
 Сборка:
 ```bash
-docker build -t <dockerhub_user>/ml-course-assignment:latest .
+docker build -t <dockerhub_user>/ml_cicd:latest .
 ```
 
 Запуск:
 ```bash
-docker run --rm -p 8000:8000 <dockerhub_user>/ml-course-assignment:latest
-```
-
-Либо через compose:
-```bash
-docker compose up --build
+docker run --rm -p 8000:8000 <dockerhub_user>/ml_cicd:latest
 ```
 
 ## 8) Заполнение `dev_sec_ops.yml`
@@ -112,12 +107,12 @@ python scripts/update_dev_sec_ops.py
 
 Собери и отправь образ:
 ```bash
-docker push <dockerhub_user>/ml-course-assignment:latest
+docker push <dockerhub_user>/ml_cicd:latest
 ```
 
 Получи digest:
 ```bash
-docker inspect --format='{{index .RepoDigests 0}}' <dockerhub_user>/ml-course-assignment:latest
+docker inspect --format='{{index .RepoDigests 0}}' <dockerhub_user>/ml_cicd:latest
 ```
 
 ## 9) Сценарии функционального тестирования контейнера
@@ -126,3 +121,10 @@ docker inspect --format='{{index .RepoDigests 0}}' <dockerhub_user>/ml-course-as
 ```bash
 python scripts/run_scenarios.py --base-url http://127.0.0.1:8000
 ```
+## 10) CI (Jenkins)
+
+Файл: `CI/Jenkinsfile`.
+
+- сборка docker image;
+- pytest внутри контейнера;
+- push в DockerHub при PR в `main`.

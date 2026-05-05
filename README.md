@@ -1,5 +1,7 @@
 # Лабораторная №1
 ## Введение
+https://hub.docker.com/r/azaliaz/ml_cicd - ссылка на Docker image в DockerHub
+https://github.com/azaliaz/ml_cicd - ссылка на репозиторий GitHub
 
 В данной работе реализован полный жизненный цикл ML-проекта:
 1. подготовка данных;
@@ -129,6 +131,8 @@ python -m src.train
 ## 4) API
 
 - API-сервис: `api/main.py`.
+- Исходная исследовательская версия была в notebook `notebooks/01_eda_baseline.ipynb`.
+- Production-логика перенесена в `.py`-скрипты: `src/preprocess.py` и `src/train.py`.
 
 Реализованы endpoints:
 - `GET /health` - проверка готовности сервиса;
@@ -268,10 +272,17 @@ docker inspect --format='{{index .RepoDigests 0}}' azaliaz/ml_cicd:latest
 3. `pytest` внутри контейнера;
 4. `docker push` в DockerHub.
 
-Push выполняется для PR в `main`.
+### Подтверждение запуска CI по PR
+
+Скриншот Pull Request в `main` (триггер CI):
+![pr](img/img11.png)
+
+Push в DockerHub выполняется для PR в `main`.
+![docker](img/img13.png)
+
 ![ci](img/img8.png)
 
-
+![docker](img/img10.png)
 
 ## 10) CD pipeline: запуск контейнера и функциональное тестирование
 
@@ -285,16 +296,21 @@ Push выполняется для PR в `main`.
 5. запуск функциональных сценариев из `scenario.json`;
 6. очистку временного контейнера.
 
+### Какие сценарии проверяются
 
-### Параметры запуска CD
-
-- `DOCKER_IMAGE` (например, `azaliaz/ml_cicd:latest`);
-- `HOST_PORT` (например, `18080`);
-- `RUN_PYTEST_IN_CONTAINER=true`;
-- `RUN_SCENARIOS=true`.
-
-### Как запускать
-
-В Jenkins: `ml-cd -> Build with Parameters`.
+Функциональные сценарии описаны в `scenario.json` и выполняются скриптом `scripts/run_scenarios.py`:
+- `health_ok`:
+  - запрос `GET /health`;
+  - ожидается HTTP 200 и JSON `{"status": "ok"}`.
+- `predict_ok`:
+  - запрос `POST /predict` с валидным payload;
+  - ожидается HTTP 200 и наличие ключа `median_house_value` в ответе.
 
 ![cd](img/img9.png)
+
+### Как запускать вручную (локально)
+
+```bash
+python scripts/run_scenarios.py --base-url http://127.0.0.1:8000
+```
+![cd](img/img12.png)

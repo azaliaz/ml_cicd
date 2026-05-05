@@ -80,10 +80,8 @@ pipeline {
       steps {
         dir("${env.DOCKER_BUILD_CTX}") {
           sh '''
-            python3 -m venv .cd-venv
-            . .cd-venv/bin/activate
-            pip install -q httpx pyyaml
-            python scripts/run_scenarios.py --base-url "${SCENARIO_BASE_URL}"
+            python3 -m pip install --user -q httpx pyyaml
+            python3 scripts/run_scenarios.py --base-url "${SCENARIO_BASE_URL}"
           '''
         }
       }

@@ -1,0 +1,14 @@
+# Сборка образа и запуск контейнера с API модели
+services:
+  housing-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${DOCKER_IMAGE_NAME:-ml-course-assignment:local}
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      - MODEL_PATH=/app/models/model.joblib
+    # При необходимости пробросить готовую модель с хоста:
+    # volumes:
+    #   - ./models/model.joblib:/app/models/model.joblib:ro

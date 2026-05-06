@@ -1,0 +1,99 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: 'DOCKER_IMAGE', defaultValue: 'azaliaz/ml_cicd:latest', description: 'Образ из registry')
+    string(name: 'HOST_PORT', defaultValue: '18080', description: 'Порт на агенте для API')
+    booleanParam(name: 'RUN_PYTEST_IN_CONTAINER', defaultValue: true, description: 'CD: pytest внутри контейнера')
+    booleanParam(name: 'RUN_SCENARIOS', defaultValue: true, description: 'CD: сценарии против поднятого API')
+  }
+
+  // triggers { cron('H 2 * * *') }
+
+  environment {
+    SCENARIO_BASE_URL = "http://127.0.0.1:${params.HOST_PORT}"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Resolve project dir') {
+      steps {
+        script {
+          env.DOCKER_BUILD_CTX = fileExists('Dockerfile') ? '.' : 'ml-course-assignment'
+        }
+      }
+    }
+
+    stage('Pull image') {
+      steps {
+        sh 'docker pull "${DOCKER_IMAGE}"'
+      }
+    }
+
+    stage('Pytest inside container (CD)') {
+      when {
+        expression { return params.RUN_PYTEST_IN_CONTAINER }
+      }
+      steps {
+        sh 'docker run --rm -e SHOW_LOG=false --entrypoint python -w /app "${DOCKER_IMAGE}" -m pytest -q'
+      }
+    }
+
+    stage('Run API container') {
+      when {
+        expression { return params.RUN_SCENARIOS }
+      }
+      steps {
+        sh '''
+          docker rm -f housing-api-cd 2>/dev/null || true
+          docker run -d --name housing-api-cd -p ${HOST_PORT}:8000 "${DOCKER_IMAGE}"
+        '''
+      }
+    }
+
+    stage('Wait for health') {
+      when {
+        expression { return params.RUN_SCENARIOS }
+      }
+      steps {
+        sh '''
+          for i in $(seq 1 60); do
+            if docker exec housing-api-cd curl -fsS "http://127.0.0.1:8000/health"; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Healthcheck timeout"; exit 1
+        '''
+      }
+    }
+
+    stage('Functional scenarios (host → container)') {
+      when {
+        expression { return params.RUN_SCENARIOS }
+      }
+      steps {
+        sh '''
+          docker run --rm \
+            --network host \
+            -e SCENARIO_BASE_URL="${SCENARIO_BASE_URL}" \
+            --entrypoint python \
+            -w /app \
+            "${DOCKER_IMAGE}" \
+            scripts/run_scenarios.py --base-url "${SCENARIO_BASE_URL}"
+        '''
+      }
+    }
+  }
+
+  post {
+    always {
+      sh 'docker rm -f housing-api-cd 2>/dev/null || true'
+    }
+  }
+}
